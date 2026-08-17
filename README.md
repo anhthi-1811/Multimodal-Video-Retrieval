@@ -55,7 +55,7 @@ AIC_2026/
 │   └── vector_search/
 │       ├── embedding_models.py  # CLIP and BGE model wrappers
 │       └── faiss_manager.py     # FAISS indexing and search
-├── ui/
+├── ui/ 
 │   └── web_app.py               # Streamlit web interface
 ├── .env                         # Environment variables (Ignored by Git)
 ├── .gitignore                   # Git ignore configurations

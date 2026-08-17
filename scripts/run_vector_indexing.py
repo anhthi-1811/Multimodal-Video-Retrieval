@@ -20,7 +20,7 @@ project_root = os.path.dirname(current_dir)
 sys.path.append(project_root)               
 
 from src.database import MongoManager
-from src.vector_search.embedding_models import TextEncoder, ObjectEncoder, ImageEncoder 
+from src.vector_search.embedding_models import TextEncoder, CLIPEncoder 
 from src.vector_search.faiss_manager import FaissManager 
 
 # Load environment variables 
@@ -38,7 +38,7 @@ VECTOR_DB_DIR = os.path.join(DATA_ROOT, 'vector_db')
 def main():
     print("==================================================")
     print("STARTING VECTOR INDEXING PIPELINE")
-    print("==================================================\n")
+    print("==================================================\n") 
 
     # -----------------------------------------------------------------------
     # PHASE 1: INITIALIZATION
@@ -48,8 +48,7 @@ def main():
     db_visual = MongoManager(uri=MONGO_URI, db_name='aic_2026_db', collection_name='keyframes_data')
     db_audio = MongoManager(uri=MONGO_URI, db_name='aic_2026_db', collection_name='video_data')
     
-    text_encoder = TextEncoder(model_name='BAAI/bge-m3')
-    object_encoder = ObjectEncoder(model_name='openai/clip-vit-base-patch32')
+    text_encoder = TextEncoder(model_name='BAAI/bge-m3') 
     image_encoder = ImageEncoder(model_name='openai/clip-vit-base-patch32')
     
     os.makedirs(VECTOR_DB_DIR, exist_ok=True)
@@ -83,7 +82,7 @@ def main():
                 image_path = ""
                 
             ocr_text = doc.get("ocr_text", "")
-            if ocr_text:
+            if ocr_text: 
                 faiss_ocr.add(text_encoder.encode(ocr_text), frame_id)
                 
             blip_caption = doc.get("blip_caption", "")
@@ -93,12 +92,13 @@ def main():
             yolo_dict = doc.get("yolo_objects", {})
             if yolo_dict:
                 object_text = ", ".join([f"{count} {obj}" for obj, count in yolo_dict.items()])
-                faiss_yolo.add(object_encoder.encode(object_text), frame_id)
+                faiss_yolo.add(clip_encoder.encode_text(object_text), frame_id)
                 
+            # Phần Image gốc:
             if os.path.exists(image_path):
-                faiss_image.add(image_encoder.encode(image_path), frame_id)
+                faiss_image.add(clip_encoder.encode_image(image_path), frame_id)
             else:
-                print(f"     [WARNING] Image not found: {image_path}")
+                print(f"     [WARNING] Image not found: {image_path}") 
 
         # -----------------------------------------------------------------------
         # PHASE 3: AUDIO DATA PIPELINE (ASR)
@@ -122,11 +122,11 @@ def main():
                     faiss_asr.add(text_encoder.encode(text), segment_id)
 
     except KeyboardInterrupt:
-        print("\n\n[WARNING] 🛑 Bạn vừa chủ động ngắt tiến trình (Ctrl+C)!")
+        print("\n\n[WARNING] Bạn vừa chủ động ngắt tiến trình (Ctrl+C)!")
         print("Đang tiến hành lưu lại toàn bộ dữ liệu đã xử lý được xuống ổ cứng để tránh mất mát...")
         
     except Exception as e:
-        print(f"\n\n[ERROR] ❌ Đã xảy ra lỗi bất ngờ: {e}")
+        print(f"\n\n[ERROR] Đã xảy ra lỗi bất ngờ: {e}")
         print("Đang tiến hành lưu lại dữ liệu để bảo toàn kết quả...") 
 
     finally:
