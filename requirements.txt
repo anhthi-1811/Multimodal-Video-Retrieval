@@ -1,56 +1,19 @@
 # ==========================================
-# CORE & COMPUTATION
+# PHASE A: FEATURE EXTRACTION (OFFLINE)
 # ==========================================
-numpy>=1.24.0,<3.0
-pandas>=2.0.0,<3.0
-
-# ==========================================
-# PHASE A: FEATURE EXTRACTION
-# Vision & Audio
-# ==========================================
-
-# PyTorch
 torch>=2.0.0
 torchvision>=0.15.0
 torchaudio>=2.0.0
-
-# YOLOv8 Object Detection
 ultralytics>=8.0.0
-
-# OCR
 easyocr>=1.7.0
-
-# PaddleOCR 3.x
 paddlepaddle-gpu==3.2.0
 paddleocr==3.3.0
-
-# PaddleX / PaddleOCR compatibility
-langchain==0.3.27
-
-# ASR
 faster-whisper>=0.10.0
-
-# Image processing
-Pillow>=9.0.0
-
-# ==========================================
-# PHASE B: VECTOR SEARCH & DATABASE
-# ==========================================
-
-faiss-cpu>=1.7.4
-pymongo>=4.5.0
-
-# ==========================================
-# PHASE C: RERANKER & LLM AGENT
-# ==========================================
-
-transformers>=4.34.0
-google-generativeai>=0.4.0
-
-# ==========================================
-# EVALUATION & UTILITIES
-# ==========================================
-
+langchain==0.3.27   
+pandas>=2.0.0,<3.0
 jiwer>=3.0.3
-nltk>=3.8.1
-python-dotenv>=1.0.0 
+nltk>=3.8.1 
+
+numpy>=1.24.0,<3.0
+Pillow>=9.0.0
+python-dotenv>=1.0.0
