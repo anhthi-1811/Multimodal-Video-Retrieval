@@ -30,7 +30,7 @@ class SearchEngine:
         """
         print("Initializing Search Engine (Dynamic Fusion Mode)...")
         
-        # 1. Load Encoders (Models) - ĐÃ SỬA
+        # 1. Load Encoders (Models) 
         self.text_encoder = TextEncoder(model_name='BAAI/bge-m3')
         self.clip_encoder = CLIPEncoder(model_name='openai/clip-vit-base-patch32')
         
@@ -113,8 +113,7 @@ class SearchEngine:
         # ---------------------------------------------------------
 
         # A. VISUAL MODALITY (Searches Image, YOLO, and Caption)
-        if visual_query:
-            # ĐÃ SỬA: Dùng hàm encode_text của CLIPEncoder
+        if visual_query: 
             vec_clip = self.clip_encoder.encode_text(visual_query)    # 512D
             vec_bge_visual = self.text_encoder.encode(visual_query)   # 1024D
             

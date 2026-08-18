@@ -10,11 +10,11 @@ receives the JSON response, and renders the images and metadata nicely.
 
 import streamlit as st
 import requests
-from PIL import Image
-import os 
+from PIL import Image 
+import os  
 
 # Backend API configuration (FastAPI endpoint)
-API_URL = "http://localhost:8000/api/search"
+API_URL = os.getenv("API_URL", "http://localhost:8000/api/search") 
 
 # Page configuration
 st.set_page_config(page_title="AIC 2026 Multimodal Search", page_icon="🏸", layout="wide") 

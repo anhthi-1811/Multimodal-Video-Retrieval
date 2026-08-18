@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # --- SERVICE 1: BACKEND API ---
+  api_backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # Map the local data directory into the container (very important)
+      # Allows the backend to read images/vectors without copying tens of GBs into the container
+      - ./data:/app/data
+      - ./.env:/app/.env
+    # Automatically restart the container if it crashes
+    restart: unless-stopped
+
+  # --- SERVICE 2: FRONTEND WEB UI ---
+  web_frontend:
+    build: ./frontend
+    ports:
+      - "8501:8501"
+    environment:
+      # Tell the frontend where the backend API is located
+      # "api_backend" refers to the backend service name defined above!
+      - API_URL=http://api_backend:8000/api/search
+    # Ensure the backend starts before the frontend
+    depends_on:
+      - api_backend
+    restart: unless-stopped 
