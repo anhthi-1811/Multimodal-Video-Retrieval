@@ -11,7 +11,7 @@ and stores these vectors into 5 independent FAISS indices.
 
 import os
 import sys
-import time
+import time 
 from dotenv import load_dotenv
 
 # 1. PATH CONFIGURATION
@@ -32,7 +32,7 @@ if not MONGO_URI:
 
 # Define Data Directories 
 DATA_ROOT = os.path.join(project_root, 'data')  
-KEYFRAMES_DIR = os.path.join(DATA_ROOT, 'keyframes')
+KEYFRAMES_DIR = os.path.join(DATA_ROOT, 'keyframes') 
 VECTOR_DB_DIR = os.path.join(DATA_ROOT, 'vector_db')
 
 def main():
@@ -49,7 +49,7 @@ def main():
     db_audio = MongoManager(uri=MONGO_URI, db_name='aic_2026_db', collection_name='video_data')
     
     text_encoder = TextEncoder(model_name='BAAI/bge-m3') 
-    image_encoder = ImageEncoder(model_name='openai/clip-vit-base-patch32')
+    clip_encoder = CLIPEncoder(model_name='openai/clip-vit-base-patch32') 
     
     os.makedirs(VECTOR_DB_DIR, exist_ok=True)
     

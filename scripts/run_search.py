@@ -90,7 +90,7 @@ def main():
             # Change top_k if you want more or fewer results
             top_results = search_engine.search(query, top_k=5)
             
-            search_time = time.time() - start_search
+            search_time = time.time() - start_search 
 
             # 2.3 Process and Display Results
             print(f"\n==================================================")
@@ -98,7 +98,7 @@ def main():
             print(f"==================================================")
             
             if not top_results:
-                print("Không tìm thấy kết quả nào phù hợp.")
+                print("Không tìm thấy kết quả nào phù hợp.") 
                 continue
 
             # Loop through the Top K results

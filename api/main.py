@@ -13,7 +13,7 @@ import os
 import sys
 import time
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel 
 from typing import List, Optional
 from dotenv import load_dotenv
 
@@ -91,7 +91,7 @@ def get_image_path(frame_id: str) -> str:
 async def perform_search(request: SearchRequest):
     """
     Main endpoint for multimodal search.
-    """
+    """ 
     if not request.query.strip():
         raise HTTPException(status_code=400, detail="Query cannot be empty.")
         

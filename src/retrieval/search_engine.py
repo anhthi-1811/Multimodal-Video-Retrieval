@@ -12,12 +12,12 @@ and performs Dynamic Late Fusion based on AI-assigned weights.
 
 import os
 import sys 
-import math
+import math 
 from collections import defaultdict
 
 # Setup paths
 current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(os.path.dirname(current_dir))
+project_root = os.path.dirname(os.path.dirname(current_dir)) 
 sys.path.append(project_root)
 
 from src.vector_search.embedding_models import TextEncoder, CLIPEncoder
@@ -100,7 +100,7 @@ class SearchEngine:
         # 1. EXTRACT DATA FROM AGENT'S PARSED JSON
         visual_query = parsed_query.get("visual_query", "").strip()
         ocr_query = parsed_query.get("ocr_query", "").strip()
-        asr_query = parsed_query.get("asr_query", "").strip()
+        asr_query = parsed_query.get("asr_query", "").strip() 
         
         weights = parsed_query.get("weights", {
             "image": 1.0, "caption": 1.0, "yolo": 1.0, "ocr": 1.0, "asr": 1.0
@@ -127,7 +127,7 @@ class SearchEngine:
                 score_ledger[fid] += score * weights.get('image', 1.0)
             for fid, score in zip(yolo_ids, yolo_scores):
                 score_ledger[fid] += score * weights.get('yolo', 1.0)
-            for fid, score in zip(cap_ids, cap_scores):
+            for fid, score in zip(cap_ids, cap_scores): 
                 score_ledger[fid] += score * weights.get('caption', 1.0)
 
         # B. OCR MODALITY

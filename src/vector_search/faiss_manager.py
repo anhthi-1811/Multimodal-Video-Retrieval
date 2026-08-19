@@ -63,7 +63,7 @@ class FaissManager:
 
     def add_batch(self, vectors: list, item_ids: list):
         """
-        Adds multiple vectors at once (Much faster for large datasets).
+        Adds multiple vectors at once (Much faster for large datasets). 
         """
         if not vectors or len(vectors) != len(item_ids):
             raise ValueError("Vectors list and item_ids list must have the same length and cannot be empty.")

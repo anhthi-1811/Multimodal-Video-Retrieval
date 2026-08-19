@@ -22,6 +22,7 @@ By leveraging an LLM-powered Query Agent as a semantic router, the system dynami
 * **LLM Engine:** Google Gemini API (`google-generativeai`).
 * **Backend:** FastAPI, Uvicorn, Pydantic.
 * **Frontend:** Streamlit.
+* **Containerization**: Docker, Docker Compose. 
 
 ## High-Level Data Flow
 
@@ -38,7 +39,11 @@ By leveraging an LLM-powered Query Agent as a semantic router, the system dynami
 ```text
 AIC_2026/
 ├── api/
-│   └── main.py                  # FastAPI server and endpoints
+│   ├── main.py                  # FastAPI server and endpoints
+│   └── Dockerfile               # Docker configuration for FastAPI Backend
+├── ui/ 
+│   ├── web_app.py               # Streamlit web interface
+│   └── Dockerfile               # Docker configuration for Streamlit Frontend
 ├── data/                        # Local data (Ignored by Git)
 │   ├── keyframes/               # Physical image files
 │   └── vector_db/               # FAISS index files (*.index)
@@ -55,19 +60,19 @@ AIC_2026/
 │   └── vector_search/
 │       ├── embedding_models.py  # CLIP and BGE model wrappers
 │       └── faiss_manager.py     # FAISS indexing and search
-├── ui/ 
-│   └── web_app.py               # Streamlit web interface
+├── docker-compose.yml           # Multi-container orchestration config
 ├── .env                         # Environment variables (Ignored by Git)
 ├── .gitignore                   # Git ignore configurations
 ├── requirements.txt             # Python dependencies
 └── README.md                    # Project documentation 
 ```
 
-## Installation & Setup
+## Installation & Setup (Docker Method - Recommended)
+Because the system has been fully containerized, running it via Docker is the easiest and most consistent method. You do not need to install Python or set up virtual environments manually. 
 
 ### 1. Prerequisites
 
-Ensure you have **Python 3.10+** installed on your system.
+Ensure you have Docker and Docker Compose installed on your system. 
 
 ### 2. Clone the Repository
 
@@ -76,46 +81,52 @@ git clone https://github.com/your-username/AIC-2026-Multimodal-Search.git
 cd AIC-2026-Multimodal-Search 
 ```
 
-### 3. Install Dependencies
-It is highly recommended to use a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows use: venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-### 4. Environment Variables
-Create a .env file in the root directory and add your credentials:
+### 3. Environment Variables 
+Create a .env file in the root directory and add your credentials: 
 ```bash
 MONGO_URI="mongodb+srv://<username>:<password>@cluster.mongodb.net/"
-GEMINI_API_KEY="your_google_gemini_api_key_here"
+GEMINI_API_KEY="your_google_gemini_api_key_here" 
 ```
 
-## How to Run the System
-The system requires both the Backend (FastAPI) and the Frontend (Streamlit) to run simultaneously. You will need to open two separate terminal windows.
-
-### Terminal 1: Start the Backend (FastAPI)
-This will initialize the AI models, connect to MongoDB, and open the API gateway.
+### 4. Build and Run 
+Launch both the Backend and Frontend simultaneously using Docker Compose:  
 ```bash
-uvicorn api.main:app --reload --port 8000
+docker-compose up --build 
 ```
-You can access the interactive API documentation (Swagger UI) at `http://localhost:8000/docs`.
+The web app will be automatically accessible at http://localhost:8501 and the API docs at http://localhost:8000/docs. 
 
-### Terminal 2: Start the Frontend (Streamlit)
-This will launch the graphical user interface.
-```bash
-streamlit run ui/web_app.py
-```
+## Installation & Setup (Manual Method) 
+If you prefer to run the system without Docker:
+1. Ensure Python 3.10+ is installed.
+2. Create and activate a virtual environment:
+    ```
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    ```
+3. Install dependencies: pip install -r requirements.txt
+4. Set up the .env file as described above.
+5. Open Terminal 1 for Backend: uvicorn api.main:app --reload --port 8000
+6. Open Terminal 2 for Frontend: streamlit run ui/web_app.py
+
+## Future Roadmap: Evaluation & Fine-Tuning
+This project is actively under development. While the core retrieval architecture and dynamic fusion logic are operational, the immediate next steps involve rigorous quantitative testing and model optimization.
+
+### Phase 1: Automated Evaluation Pipeline
+I am currently developing a robust evaluation script (scripts/evaluate.py) designed to measure system performance against standardized ground truth datasets provided by the AIC organizers. This pipeline will automatically calculate standard Information Retrieval metrics: 
+
+- Recall@K: To ensure relevant keyframes are not missed in the top results.
+- Mean Average Precision (mAP): To assess the overall quality and ranking order.
+- Mean Reciprocal Rank (MRR): To measure how quickly the first correct frame is returned.
 
 The web app will automatically open in your default browser at http://localhost:8501.
 
-## Evaluation
-To evaluate the system's performance using standard Information Retrieval metrics (mAP, Recall@K):
-   1. Ensure you have `ground_truth.csv` and `my_predictions.csv` inside the data/ folder.
-   2. Run the evaluation script: 
-   ```bash
-   python scripts/evaluate.py
-   ``` 
+### Phase 2: System Fine-Tuning Strategy
+Based on the insights gathered from the Phase 1 evaluation metrics, we plan to implement a multi-tiered fine-tuning strategy to elevate performance:
+   1. Level 1 (Weight Tuning): Utilizing automated search algorithms (e.g., Grid Search) to optimize the fusion weights beyond the LLM's dynamic assignments, finding the optimal balance between visual, text, and audio scores.
+
+   2. RLevel 2 (Prompt Engineering): Refining the Gemini Query Agent via Few-Shot Prompting to achieve near-perfect intent parsing, especially for complex, multi-layered queries.
+   3. Level 3 (Model Adaptation): If necessary, applying low-rank adaptation (LoRA) or contrastive learning techniques to the core CLIP and BGE models to better understand domain-specific (sports) vocabulary and visual contexts.
+
    
 
 

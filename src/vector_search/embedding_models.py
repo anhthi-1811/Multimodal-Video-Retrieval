@@ -30,7 +30,7 @@ class TextEncoder:
     def encode(self, text: str) -> list:
         if not text or not text.strip():
             return []
-        vector = self.model.encode(text, normalize_embeddings=True)
+        vector = self.model.encode(text, normalize_embeddings=True) 
         return vector.tolist()
 
 

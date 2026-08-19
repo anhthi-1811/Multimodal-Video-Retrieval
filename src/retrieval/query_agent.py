@@ -48,7 +48,7 @@ class QueryAgent:
         - Nếu có asr_query, hãy tăng asr weight lên 1.5 hoặc 2.0.
         - Nếu nhấn mạnh vào hành động cụ thể, hãy tăng yolo/image lên 1.2.
 
-        YÊU CẦU BẮT BUỘC: 
+        YÊU CẦU BẮT BUỘC:  
         Chỉ trả về DUY NHẤT một JSON Object, không giải thích gì thêm.
         """
 

@@ -9,7 +9,7 @@ receives the JSON response, and renders the images and metadata nicely.
 """
 
 import streamlit as st
-import requests
+import requests 
 from PIL import Image 
 import os  
 

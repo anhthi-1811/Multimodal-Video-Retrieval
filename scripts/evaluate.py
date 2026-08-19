@@ -1,10 +1,10 @@
 """
 =============================================================================
-EVALUATION METRICS SCRIPT
+EVALUATION METRICS SCRIPT (mAP, Recall@K, MRR)
 =============================================================================
 Description:
-Computes standard Information Retrieval metrics (mAP, Recall@K) by comparing 
-system predictions against a Ground Truth file.
+Computes standard Information Retrieval metrics (mAP, Recall@K, MRR) by 
+comparing system predictions against a Ground Truth file.
 =============================================================================
 """
 
@@ -19,7 +19,7 @@ def load_ground_truth(filepath: str) -> dict:
     """
     Reads the ground truth CSV.
     Expected format: query_id, frame_id
-    Returns a dictionary: { "query_id": set("frame_id_1", "frame_id_2") }
+    Returns: { "query_id": set("frame_id_1", "frame_id_2") }
     """
     gt_dict = defaultdict(set)
     if not os.path.exists(filepath):
@@ -37,22 +37,29 @@ def load_ground_truth(filepath: str) -> dict:
 
 def load_predictions(filepath: str) -> dict:
     """
-    Reads the prediction CSV.
+    Reads the prediction CSV and sorts frames explicitly by rank.
     Expected format: query_id, frame_id, rank
-    Returns a dictionary: { "query_id": ["frame_id_1", "frame_id_2", ...] } (Ordered by rank)
+    Returns: { "query_id": ["frame_id_1", "frame_id_2", ...] }
     """
-    pred_dict = defaultdict(list)
+    raw_preds = defaultdict(list)
     if not os.path.exists(filepath):
         print(f"[WARNING] Prediction file not found: {filepath}")
-        return pred_dict
+        return {}
 
     with open(filepath, mode='r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
             q_id = row['query_id'].strip()
             f_id = row['frame_id'].strip()
-            pred_dict[q_id].append(f_id)
-            
+            rank = int(row.get('rank', 0))
+            raw_preds[q_id].append((rank, f_id))
+
+    # Sort each query's predictions by rank to guarantee correct order
+    pred_dict = {}
+    for q_id, items in raw_preds.items():
+        items.sort(key=lambda x: x[0])
+        pred_dict[q_id] = [f_id for _, f_id in items]
+
     return pred_dict
 
 # ===========================================================================
@@ -60,56 +67,68 @@ def load_predictions(filepath: str) -> dict:
 # ===========================================================================
 def calculate_metrics(gt_dict: dict, pred_dict: dict, k: int = 100):
     """
-    Calculates Mean Average Precision (mAP) and Recall@K.
+    Calculates Mean Average Precision (mAP@K), Recall@K, and Mean Reciprocal Rank (MRR@K).
     """
     total_queries = len(gt_dict)
     if total_queries == 0:
         print("No ground truth data available to evaluate.")
-        return 0.0, 0.0
+        return 0.0, 0.0, 0.0
 
     sum_ap = 0.0
     sum_recall = 0.0
+    sum_rr = 0.0
 
     for q_id, relevant_frames in gt_dict.items():
-        # Get top K predictions for this query
-        predictions = pred_dict.get(q_id, [])[:k]
+        raw_predictions = pred_dict.get(q_id, [])[:k]
         
+        # Deduplicate predictions while preserving order
+        predictions = []
+        seen = set()
+        for f_id in raw_predictions:
+            if f_id not in seen:
+                seen.add(f_id)
+                predictions.append(f_id)
+
         hits = 0
         sum_precisions = 0.0
-        
-        # Calculate Average Precision (AP) and Recall for the current query
+        first_hit_rank = None
+
         for rank, pred_frame in enumerate(predictions, start=1):
             if pred_frame in relevant_frames:
                 hits += 1
                 sum_precisions += hits / rank
-                
-        # AP for this query
+                if first_hit_rank is None:
+                    first_hit_rank = rank
+
+        # 1. Average Precision (AP)
         ap = sum_precisions / len(relevant_frames) if relevant_frames else 0.0
         sum_ap += ap
-        
-        # Recall@K for this query
+
+        # 2. Recall@K
         recall = hits / len(relevant_frames) if relevant_frames else 0.0
         sum_recall += recall
 
-    # Averages across all queries
+        # 3. Reciprocal Rank (RR)
+        rr = (1.0 / first_hit_rank) if first_hit_rank is not None else 0.0
+        sum_rr += rr
+
     mAP = sum_ap / total_queries
     mean_recall = sum_recall / total_queries
+    mrr = sum_rr / total_queries
 
-    return mAP, mean_recall
+    return mAP, mean_recall, mrr
 
 # ===========================================================================
 # 3. MAIN EXECUTION
 # ===========================================================================
 if __name__ == "__main__":
     print("==================================================")
-    print("   EVALUATION METRICS CALCULATOR   ")
+    print("       EVALUATION METRICS CALCULATOR              ")
     print("==================================================\n")
     
     current_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(current_dir)
     
-    # Define paths to your CSV files
-    # Note: You need to create these files or generate them via run_submission.py
     gt_file = os.path.join(project_root, 'data', 'ground_truth.csv')
     pred_file = os.path.join(project_root, 'data', 'my_predictions.csv')
     
@@ -120,16 +139,16 @@ if __name__ == "__main__":
     pred_data = load_predictions(pred_file)
     
     if gt_data and pred_data:
-        # Evaluate for Top 100
         K = 100
         print(f"\n[SYSTEM] Calculating metrics for Top-{K}...")
-        mAP, recall = calculate_metrics(gt_data, pred_data, k=K)
+        mAP, recall, mrr = calculate_metrics(gt_data, pred_data, k=K)
         
         print("\n==================================================")
         print(f" FINAL RESULTS (Evaluated on {len(gt_data)} queries)")
         print("==================================================")
-        print(f" > mAP@{K}    : {mAP:.4f}")
-        print(f" > Recall@{K} : {recall:.4f}")
+        print(f" > mAP@{K}     : {mAP:.4f}")
+        print(f" > Recall@{K}  : {recall:.4f}")
+        print(f" > MRR@{K}     : {mrr:.4f}")
         print("==================================================")
     else:
         print("\n[ERROR] Missing data files. Cannot perform evaluation.")
