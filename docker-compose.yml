@@ -1,29 +1,31 @@
 version: '3.8'
 
 services:
-  # --- SERVICE 1: BACKEND API ---
+  # --- SERVICE 1: BACKEND API (FASTAPI + AGENT) ---
   api_backend:
-    build: ./backend
+    build: ./api  # Updated to match the "api" directory
     ports:
       - "8000:8000"
     volumes:
-      # Map the local data directory into the container (very important)
-      # Allows the backend to read images/vectors without copying tens of GBs into the container
+      # Map the local data directory into the container
+      # Allows the backend to access FAISS indices and vector DBs
       - ./data:/app/data
-      - ./.env:/app/.env
-    # Automatically restart the container if it crashes
-    restart: unless-stopped
+    env_file:
+      # Automatically load all variables from .env file (GOOGLE_API_KEY, MONGO_URI)
+      - .env
+    restart: unless-stopped 
 
-  # --- SERVICE 2: FRONTEND WEB UI ---
+  # --- SERVICE 2: FRONTEND WEB UI (STREAMLIT) ---
   web_frontend:
-    build: ./frontend
+    build: ./ui   # Updated to match the "ui" directory
     ports:
       - "8501:8501"
+    volumes:
+      # CRITICAL FIX: Map the data directory so Streamlit can read and render the physical images
+      - ./data:/app/data
     environment:
       # Tell the frontend where the backend API is located
-      # "api_backend" refers to the backend service name defined above!
       - API_URL=http://api_backend:8000/api/search
-    # Ensure the backend starts before the frontend
     depends_on:
       - api_backend
     restart: unless-stopped 

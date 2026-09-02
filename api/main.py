@@ -1,11 +1,11 @@
 """
 =============================================================================
-BACKEND API SERVER (FASTAPI)
+BACKEND API SERVER (FASTAPI) 
 =============================================================================
 Description:
 Acts as the bridge between the UI and the Core Engine. It receives HTTP 
-requests, orchestrates the LLM Agent and Search Engine, enriches results 
-with MongoDB metadata, and returns a structured JSON response.
+requests, delegates the complex reasoning and retrieval to the RetrievalAgent,
+enriches results with MongoDB metadata, and returns a structured JSON response.
 =============================================================================
 """
 
@@ -17,42 +17,40 @@ from pydantic import BaseModel
 from typing import List, Optional
 from dotenv import load_dotenv
 
-# Setup paths to import src modules
+# Setup paths
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(current_dir)
 sys.path.append(project_root)
 
-from src.database import MongoManager
-from src.retrieval.search_engine import SearchEngine
-from src.retrieval.query_agent import QueryAgent
-
-# Load environment variables
 load_dotenv(os.path.join(project_root, '.env'))
 MONGO_URI = os.getenv("MONGO_URI")
+# ==========================================
+
+from src.database.mongo_manager import MongoManager
+from src.agent.retrieval_agent import RetrievalAgent
 
 # Define base directories for image paths
 KEYFRAMES_DIR = os.path.join(project_root, 'data', 'keyframes')
-VECTOR_DB_DIR = os.path.join(project_root, 'data', 'vector_db')
 
 # ---------------------------------------------------------------------------
 # 1. INIT FASTAPI & GLOBAL MODULES
 # ---------------------------------------------------------------------------
-app = FastAPI(title="AIC 2026 Multimodal Search API", version="1.0")
+app = FastAPI(title="AIC 2026 AI Agent API", version="2.0")
 
 # Global instances (Loaded once when server starts)
 db_visual = None
-search_engine = None
-query_agent = None
+retrieval_agent = None
 
 @app.on_event("startup")
 def startup_event():
     """Initializes heavy models and database connections at server startup."""
-    global db_visual, search_engine, query_agent
-    print("[API] Starting up server, loading AI models...")
+    global db_visual, retrieval_agent
+    print("[API] Starting up server, loading AI Agent and Models...")
     
     db_visual = MongoManager(uri=MONGO_URI, db_name='aic_2026_db', collection_name='keyframes_data')
-    query_agent = QueryAgent()
-    search_engine = SearchEngine(vector_db_dir=VECTOR_DB_DIR)
+    
+    # Initialize the new Brain
+    retrieval_agent = RetrievalAgent()
     
     print("[API] All systems ready!")
 
@@ -67,7 +65,7 @@ def shutdown_event():
 # ---------------------------------------------------------------------------
 class SearchRequest(BaseModel):
     query: str
-    top_k: Optional[int] = 5
+    top_k: Optional[int] = 50
 
 # ---------------------------------------------------------------------------
 # 3. HELPER FUNCTIONS
@@ -90,7 +88,7 @@ def get_image_path(frame_id: str) -> str:
 @app.post("/api/search")
 async def perform_search(request: SearchRequest):
     """
-    Main endpoint for multimodal search.
+    Main endpoint for multimodal Agentic search.
     """ 
     if not request.query.strip():
         raise HTTPException(status_code=400, detail="Query cannot be empty.")
@@ -98,13 +96,14 @@ async def perform_search(request: SearchRequest):
     start_time = time.time()
     
     try:
-        # Step 1: Agent parses the query
-        parsed_query = query_agent.parse_query(request.query)
+        # Step 1: Delegate the entire reasoning & searching process to the Agent
+        # The Agent will automatically decide which tools to use and evaluate scores
+        top_results = retrieval_agent.run(user_query=request.query, score_threshold=0.25)
         
-        # Step 2: Search Engine retrieves top Frame IDs
-        top_results = search_engine.search(parsed_query, top_k=request.top_k)
+        # Limit to the requested top_k items
+        top_results = top_results[:request.top_k]
         
-        # Step 3: Enrich with Metadata from MongoDB
+        # Step 2: Enrich with Metadata from MongoDB
         final_results = []
         for rank, (frame_id, score) in enumerate(top_results, start=1):
             doc = db_visual.collection.find_one({"frame_id": frame_id})
@@ -131,7 +130,7 @@ async def perform_search(request: SearchRequest):
         return {
             "status": "success",
             "processing_time_sec": round(processing_time, 3),
-            "agent_thought_process": parsed_query,
+            "agent_status": "ReAct Loop Completed",
             "results": final_results
         }
         
